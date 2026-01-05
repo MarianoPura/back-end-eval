@@ -1,0 +1,31 @@
+# Build artifacts
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VS Code stuff
+.vscode/
+
+# Rider
+.idea/
+
+# macOS stuff
+.DS_Store
+
+# dotenv
+.env
+.env.*
+appsettings.Development.json
+
+# Logs
+*.log
+
+# dotnet tools
+**/.store/
+**/.tools/
+**/.package/
