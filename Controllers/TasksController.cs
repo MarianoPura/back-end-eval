@@ -43,9 +43,21 @@ namespace TaskManager.API
                 UserId = request.UserId
             };
 
-            _context.Tasks.Add(task);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(Get), new { id = task.Id }, task);
+            try
+            {
+                _context.Tasks.Add(task);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction(nameof(Get), new { id = task.Id }, task);
+            }
+            catch (DbUpdateException ex)
+            {
+                if (ex.InnerException?.Message.Contains("duplicate key") == true ||
+                    ex.InnerException?.Message.Contains("unique constraint") == true)
+                {
+                    return Conflict(new { message = "You already added this task." });
+                }
+                throw;
+            }
         }
 
         [HttpPut("{id}")] 
