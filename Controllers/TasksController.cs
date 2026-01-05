@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 using TaskManager.Models;
@@ -9,6 +11,7 @@ namespace TaskManager.API
 {
     [Route("tasks")]
     [ApiController]
+    [Authorize]
     public class TasksController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -18,11 +21,17 @@ namespace TaskManager.API
             _context = context;
         }
 
+        private int GetUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            return int.Parse(userIdClaim!.Value);
+        }
+
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            
-            var tasks = await _context.Tasks.ToListAsync();
+            var userId = GetUserId();
+            var tasks = await _context.Tasks.Where(t => t.UserId == userId).ToListAsync();
             return Ok(tasks);
         }
 
@@ -32,15 +41,13 @@ namespace TaskManager.API
             if (string.IsNullOrWhiteSpace(request.Title))
                 return BadRequest(new { message = "Title is required" });
 
-            var userExists = await _context.Users.AnyAsync(u => u.Id == request.UserId);
-            if (!userExists)
-                return BadRequest(new { message = "User not found" });
+            var userId = GetUserId();
 
             var task = new TaskItem
             {
                 Title = request.Title,
                 IsDone = request.IsDone,
-                UserId = request.UserId
+                UserId = userId
             };
 
             try
@@ -90,7 +97,6 @@ namespace TaskManager.API
     {
         public string Title { get; set; } = string.Empty;
         public bool IsDone { get; set; }
-        public int UserId { get; set; }
     }
 
     public class UpdateTaskRequest
